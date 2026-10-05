@@ -73,6 +73,21 @@ function chat(req, res, body) {
 }
 
 http.createServer((req, res) => {
+  if (req.method === 'GET' && req.url.split('?')[0] === '/account') {
+    // which kind of account the token signs in to (plan type only: no token, the email is masked)
+    const c = spawn(CLAUDE, ['auth', 'status'], { env: process.env });
+    let out = '';
+    c.stdout.on('data', d => out += d);
+    c.on('close', () => {
+      let j = {};
+      try { j = JSON.parse(out); } catch (e) { j = { raw: out.slice(0, 200) }; }
+      const mask = s => s ? String(s).replace(/^(.{2}).*(@.*)$/, '$1***$2') : s;
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ loggedIn: j.loggedIn, authMethod: j.authMethod, apiProvider: j.apiProvider, subscriptionType: j.subscriptionType, email: mask(j.email), orgName: mask(j.orgName), raw: j.raw }));
+    });
+    c.on('error', e => { res.writeHead(500); res.end(String(e)); });
+    return;
+  }
   if (req.method === 'GET') {   // health check (SAI Cloud pings this every 10 minutes so the free service doesn't sleep)
     res.writeHead(200, { 'content-type': 'text/plain' });
     res.end('SAI cloud Claude is running.' + (process.env.CLAUDE_CODE_OAUTH_TOKEN ? '' : ' (not signed in yet)'));
