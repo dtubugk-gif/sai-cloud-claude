@@ -1,0 +1,14 @@
+# Render Blueprint: SAI cloud Claude on Render's free plan. "Deploy to Render" asks for CLAUDE_CODE_OAUTH_TOKEN
+# (from `claude setup-token` on the PC: your own Claude plan); nothing else to fill in.
+services:
+  - type: web
+    name: sai-cloud-claude
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: CLAUDE_CODE_OAUTH_TOKEN
+        sync: false
+      - key: SAI_CLOUD_URL
+        value: https://sai-cloud.gravity-maze.workers.dev
